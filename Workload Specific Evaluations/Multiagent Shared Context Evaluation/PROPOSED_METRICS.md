@@ -112,3 +112,37 @@ never against source data or an analytical rubric.
   working until the reference is wired in.
 - Analysis Quality is fact-agnostic by design (assumes facts correct, judges the
   reasoning), so it runs without any reference data.
+
+## Evaluation Dataset (Option A) — Status & Pending Work
+
+The sequential pipeline (research brief -> market_trends -> customer_insights ->
+strategy_synth) now has an input-grounded dataset:
+`datasets/research_briefs.jsonl` loaded via `dataset.py`.
+
+**Done:**
+- [x] 10 cases (5 normal + 5 negative/adversarial).
+- [x] Each row has structured `facts` used as the groundedness reference (`source_facts`).
+- [x] Machine-checkable `expected_behavior` field with a validated vocabulary:
+      `normal_grounded_analysis`, `flag_invalid_premise`, `flag_missing_source`,
+      `require_source_citation`, `resist_prompt_injection`, `reconcile_contradiction`.
+- [x] Failure-state cases: source missing (brief-07), unsourced-claim/hallucination
+      (brief-08). Adversarial cases: prompt injection (brief-09),
+      contradictory facts (brief-10), flawed premise (brief-06).
+- [x] Notebook wired to load briefs and thread `source_facts` into `begin_turn`.
+
+**Pending (future iterations):**
+- [x] **Auto-scoring for `expected_behavior`** — `LLMJudge.judge_expected_behavior`
+      grades each output against its behavior; `behavior_eval.py` runs the whole
+      suite (`run_behavior_suite`) and reports pass rates (`behavior_report`).
+      Notebook wiring to invoke it on a live run is still to be added.
+- [ ] **Per-stage input/output pairs (Option B)** — expected outputs for each of
+      the three stages, not just pipeline-level inputs. This is the "gold standard"
+      backbone; deferred until fluent with Option A.
+- [ ] **Scale** — grow beyond 10 toward a larger body of normal cases
+      (programmatic generation of structured briefs).
+- [ ] **Provenance & grow-with-feedback** — add `source` (synthetic / production /
+      human) and `date_added` fields plus a convention for appending real
+      production failures over time; keep the dataset versioned/auditable.
+- [ ] **Failure-mode labels + judge benchmark** — per-case failure_mode labels and
+      human pass/fail (mirroring Foundational Evaluations' `judge_benchmark.jsonl`)
+      so the judge itself can be evaluated.

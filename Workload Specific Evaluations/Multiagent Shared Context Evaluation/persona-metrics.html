@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Agent Evaluation - Persona Metrics View</title>
+<style>
+  :root {
+    --ink:#1a1f2b; --navy:#0f2a4a; --blue:#2d6cdf; --teal:#129e8f;
+    --amber:#e0851e; --red:#c0392b; --purple:#6b4ec4; --grey:#5b6470;
+    --line:#d6deea; --light:#f2f5fa; --bg:#eef2f8;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Calibri,Roboto,sans-serif;
+    color:var(--ink); background:var(--bg); line-height:1.45;
+  }
+  header {
+    background:linear-gradient(135deg,var(--navy),#153862);
+    color:#fff; padding:34px 40px 28px;
+  }
+  header .kicker { color:var(--teal); font-weight:700; letter-spacing:.08em; font-size:13px; }
+  header h1 { margin:6px 0 8px; font-size:30px; }
+  header p { margin:0; color:#c9d6ea; font-size:16px; max-width:900px; }
+  .wrap { max-width:1180px; margin:0 auto; padding:26px 24px 60px; }
+
+  .personas { display:flex; gap:10px; flex-wrap:wrap; margin:24px 0 6px; }
+  .ptab {
+    flex:1 1 200px; cursor:pointer; border:2px solid var(--line); border-radius:12px;
+    background:#fff; padding:14px 16px; transition:all .15s; min-width:200px;
+  }
+  .ptab:hover { transform:translateY(-2px); }
+  .ptab .ptitle { font-weight:700; font-size:15px; }
+  .ptab .pq { font-size:12.5px; color:var(--grey); margin-top:3px; }
+  .ptab.active { color:#fff; border-color:transparent; }
+  .ptab[data-p="all"].active { background:var(--navy); }
+  .ptab[data-p="pm"].active { background:var(--purple); }
+  .ptab[data-p="eng"].active { background:var(--blue); }
+  .ptab[data-p="plat"].active { background:var(--teal); }
+  .ptab[data-p="sre"].active { background:var(--amber); }
+  .ptab.active .pq { color:rgba(255,255,255,.85); }
+
+  .hint { font-size:13px; color:var(--grey); margin:4px 2px 22px; }
+
+  .qrow { margin:26px 0 10px; display:flex; align-items:center; gap:10px; }
+  .qrow .qnum {
+    width:30px; height:30px; border-radius:50%; background:var(--navy); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:700; font-size:15px;
+  }
+  .qrow h2 { margin:0; font-size:19px; }
+  .qrow .qsub { color:var(--grey); font-size:13.5px; margin-left:4px; }
+
+  .cards { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:14px; }
+  .card {
+    background:#fff; border:1px solid var(--line); border-left:5px solid var(--grey);
+    border-radius:10px; padding:14px 16px; transition:opacity .15s, transform .15s;
+  }
+  .card h3 { margin:0 0 6px; font-size:15px; }
+  .card p { margin:0 0 10px; font-size:13px; color:var(--grey); }
+  .badges { display:flex; gap:6px; flex-wrap:wrap; }
+  .badge {
+    font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px; color:#fff;
+  }
+  .b-pm{background:var(--purple);} .b-eng{background:var(--blue);}
+  .b-plat{background:var(--teal);} .b-sre{background:var(--amber);}
+  .stage { font-size:11px; color:var(--grey); border:1px solid var(--line); border-radius:20px; padding:3px 9px; }
+  .card.dim { opacity:.16; }
+  .card[data-lead="pm"]{border-left-color:var(--purple);}
+  .card[data-lead="eng"]{border-left-color:var(--blue);}
+  .card[data-lead="plat"]{border-left-color:var(--teal);}
+  .card[data-lead="sre"]{border-left-color:var(--amber);}
+
+  .gap-note {
+    background:#fdf3e2; border:1.5px solid var(--amber); border-radius:10px;
+    padding:12px 16px; font-size:13.5px; margin-top:8px;
+  }
+  .gap-note b { color:var(--amber); }
+
+  .charts { margin-top:44px; }
+  .charts > h2 { font-size:22px; margin-bottom:4px; }
+  .charts > .sub { color:var(--grey); font-size:14px; margin-bottom:20px; }
+  .charts > .sub b { color:var(--ink); }
+  .chart {
+    background:#fff; border:1px solid var(--line); border-radius:12px;
+    padding:18px 20px; margin-bottom:18px; display:grid;
+    grid-template-columns:minmax(320px,1.15fr) 1fr; gap:22px; align-items:start;
+    border-top:4px solid var(--grey);
+  }
+  .chart[data-lead="pm"]{border-top-color:var(--purple);}
+  .chart[data-lead="eng"]{border-top-color:var(--blue);}
+  .chart[data-lead="plat"]{border-top-color:var(--teal);}
+  .chart[data-lead="sre"]{border-top-color:var(--amber);}
+  .chart.dim { opacity:.16; }
+  .chart img { width:100%; height:auto; border:1px solid var(--line); border-radius:8px; background:#fff; }
+  .chart .cbody h3 { margin:0 0 4px; font-size:17px; }
+  .chart .cbody .badges { margin-bottom:10px; }
+  .chart .cbody .readq { font-weight:700; font-size:13.5px; margin:10px 0 4px; color:var(--navy); }
+  .chart .cbody ul { margin:4px 0 0; padding-left:18px; }
+  .chart .cbody li { font-size:13px; margin-bottom:5px; }
+  .chart .cbody li b { color:var(--ink); }
+  .chart .flag {
+    background:#fdf3e2; border-left:3px solid var(--amber); border-radius:6px;
+    padding:8px 10px; font-size:12.5px; margin-top:10px;
+  }
+  @media (max-width:780px){ .chart { grid-template-columns:1fr; } }
+
+  .cautions { margin-top:44px; }
+  .cautions > h2 { font-size:22px; margin-bottom:4px; }
+  .cautions > .sub { color:var(--grey); font-size:14px; margin-bottom:18px; }
+  .caution {
+    background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px 20px;
+    margin-bottom:14px; border-top:4px solid var(--grey); display:grid;
+    grid-template-columns:52px 1fr; gap:16px; align-items:start;
+  }
+  .caution.c1{border-top-color:var(--red);} .caution.c2{border-top-color:var(--amber);}
+  .caution.c3{border-top-color:var(--purple);}
+  .caution .cn {
+    width:44px; height:44px; border-radius:50%; color:#fff; font-weight:700; font-size:20px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .c1 .cn{background:var(--red);} .c2 .cn{background:var(--amber);} .c3 .cn{background:var(--purple);}
+  .caution h3 { margin:2px 0 6px; font-size:18px; }
+  .caution .mech { display:flex; gap:12px; flex-wrap:wrap; margin:8px 0; }
+  .caution .mech div {
+    flex:1 1 240px; background:var(--light); border-radius:8px; padding:10px 12px; font-size:13px;
+  }
+  .caution .mech .lbl { font-weight:700; display:block; margin-bottom:2px; }
+  .caution .lesson { font-size:13.5px; margin-top:6px; }
+  .caution .lesson b { color:var(--ink); }
+  footer { color:var(--grey); font-size:12px; text-align:center; padding:20px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">EVALUATING AGENT FUNCTIONS</div>
+  <h1>Persona Metrics View &mdash; is the agent doing a &ldquo;good job&rdquo;?</h1>
+  <p>The same metric suite answers different questions for different people. Pick a persona to
+  highlight the metrics they lead on. Example: the <code>market_trends_analyst</code> agent.</p>
+</header>
+
+<div class="wrap">
+  <div class="personas" id="personas">
+    <div class="ptab active" data-p="all"><div class="ptitle">All personas</div><div class="pq">Show every metric</div></div>
+    <div class="ptab" data-p="pm"><div class="ptitle">PM / Domain Expert</div><div class="pq">&ldquo;Is the output actually good?&rdquo;</div></div>
+    <div class="ptab" data-p="eng"><div class="ptitle">Application Engineer</div><div class="pq">&ldquo;Do the contracts hold?&rdquo;</div></div>
+    <div class="ptab" data-p="plat"><div class="ptitle">Platform Engineer</div><div class="pq">&ldquo;Is the substrate efficient?&rdquo;</div></div>
+    <div class="ptab" data-p="sre"><div class="ptitle">Prod Ops / SRE</div><div class="pq">&ldquo;Is it fast, cheap, stable?&rdquo;</div></div>
+  </div>
+  <div class="hint">Rows below are the four questions that define &ldquo;good job.&rdquo; Cards are the metrics; the colored left edge marks the persona who leads on it. Selecting a persona dims the rest.</div>
+
+  <div id="rows"></div>
+
+  <div class="charts">
+    <h2>Charts from the notebook runs</h2>
+    <div class="sub">These are the visuals the evaluation notebooks produce (via <b>eval_helpers.py</b>), rendered from a representative sequential run of the three peers. The colored top edge marks the persona who reads each chart most; the persona filter above dims the rest.</div>
+
+    <div class="chart" data-lead="pm" data-personas="pm,eng">
+      <img src="charts/radar_simple.png" alt="Context quality radar chart" />
+      <div class="cbody">
+        <h3>Context Quality Radar</h3>
+        <div class="badges"><span class="badge b-pm">PM/Domain</span><span class="badge b-eng">App Eng</span><span class="stage">Design / Code</span></div>
+        <div class="readq">How to read it</div>
+        <ul>
+          <li>Each spoke is one quality metric, scored <b>1&ndash;5</b>. Further from center = better.</li>
+          <li>A <b>large, even hexagon</b> means balanced quality; a dented spoke flags the weak dimension.</li>
+          <li>Averaged across all agents in the session, so it's a session-level health snapshot.</li>
+        </ul>
+        <div class="flag">Blind spot: this radar only shows <b>context-flow</b> metrics. A full shape here does <b>not</b> mean the analysis was accurate &mdash; that's what Groundedness / Analysis Quality add.</div>
+      </div>
+    </div>
+
+    <div class="chart" data-lead="sre" data-personas="sre,plat">
+      <img src="charts/latency_simple.png" alt="Latency breakdown stacked bar chart" />
+      <div class="cbody">
+        <h3>Latency Breakdown</h3>
+        <div class="badges"><span class="badge b-sre">SRE</span><span class="badge b-plat">Platform</span><span class="stage">Operate</span></div>
+        <div class="readq">How to read it</div>
+        <ul>
+          <li>One stacked bar per agent call. Height = total wall-clock time in <b>seconds</b>.</li>
+          <li>Segments: <b>memory read</b> (green), <b>memory write</b> (orange), <b>reasoning</b> (blue).</li>
+          <li>Lots of green/orange vs blue means coordination overhead is eating the latency budget.</li>
+        </ul>
+        <div class="flag">In this run reasoning dominates (~15s) and memory I/O is near zero &mdash; the shared-memory layer is <b>not</b> the bottleneck here.</div>
+      </div>
+    </div>
+
+    <div class="chart" data-lead="sre" data-personas="sre,eng">
+      <img src="charts/tokens_simple.png" alt="Token usage stacked bar chart" />
+      <div class="cbody">
+        <h3>Token Usage per Agent Call</h3>
+        <div class="badges"><span class="badge b-sre">SRE</span><span class="badge b-eng">App Eng</span><span class="stage">Operate / Code</span></div>
+        <div class="readq">How to read it</div>
+        <ul>
+          <li>Stacked bar per agent: <b>input tokens</b> (blue) + <b>output tokens</b> (orange).</li>
+          <li>Input tokens climbing across later agents = shared context accumulating in the prompt.</li>
+          <li>Primary <b>cost</b> proxy; pair with latency to see the compute/cost trade.</li>
+        </ul>
+        <div class="flag">Same number, two readings: SRE sees <b>cost</b>; the engineer sees <b>context bloat</b> (Caution 2).</div>
+      </div>
+    </div>
+
+    <div class="chart" data-lead="eng" data-personas="eng,pm,sre">
+      <img src="charts/comparison.png" alt="Session comparison bar chart" />
+      <div class="cbody">
+        <h3>Session Comparison</h3>
+        <div class="badges"><span class="badge b-eng">App Eng</span><span class="badge b-pm">PM/Domain</span><span class="badge b-sre">SRE</span><span class="stage">Design / Operate</span></div>
+        <div class="readq">How to read it</div>
+        <ul>
+          <li>Paired bars per metric: a baseline session vs. a second session (here, a <b>revised brief</b>).</li>
+          <li>Read the <b>gap</b> between the two bars &mdash; that's the regression or improvement.</li>
+          <li>Use it as a before/after diff when you change a prompt, model, or memory strategy.</li>
+        </ul>
+        <div class="flag">Freshness and Consistency drop most when the brief changes mid-session &mdash; the classic stale-context failure mode.</div>
+      </div>
+    </div>
+
+    <div class="chart" data-lead="plat" data-personas="plat,pm">
+      <img src="charts/c2_heatmap.png" alt="C2 alignment heatmap" />
+      <div class="cbody">
+        <h3>C2 Alignment Heatmap</h3>
+        <div class="badges"><span class="badge b-plat">Platform</span><span class="badge b-pm">PM/Domain</span><span class="stage">Deploy</span></div>
+        <div class="readq">How to read it</div>
+        <ul>
+          <li>Pairwise <b>cosine similarity</b> of agent outputs (0&ndash;1). Green = aligned, red = divergent.</li>
+          <li>Diagonal is always 1.0 (self). Read the off-diagonal cells.</li>
+          <li><b>Very high</b> everywhere can mean redundancy (agents echoing); <b>very low</b> can mean drift or disagreement.</li>
+        </ul>
+        <div class="flag">Alignment is a proxy, not a verdict: agents can be highly aligned <b>and</b> consistently wrong. Confirm with Groundedness.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cautions">
+    <h2>Three cautions</h2>
+    <div class="sub">Partitioning metrics by persona speeds up triage &mdash; but taken literally it misleads. Keep these in mind.</div>
+
+    <div class="caution c1">
+      <div class="cn">1</div>
+      <div>
+        <h3>Failures hide in the seams between personas</h3>
+        <div class="mech">
+          <div><span class="lbl" style="color:var(--teal)">Engineer: Write Accuracy 5/5</span>Output is consistent with its input &rarr; looks healthy.</div>
+          <div><span class="lbl" style="color:var(--red)">PM: Groundedness 2/5</span>Output doesn't match reality &mdash; the input premise was wrong &rarr; broken.</div>
+        </div>
+        <div class="lesson"><b>Personas are lenses, not owners.</b> Same agent, same turn, opposite verdicts. If each persona reads only their column, nobody owns the seam &mdash; and the seam is where the failure lives. Give everyone a home dashboard, but gate releases on a cross-persona read.</div>
+      </div>
+    </div>
+
+    <div class="caution c2">
+      <div class="cn">2</div>
+      <div>
+        <h3>The same metric means different things</h3>
+        <div class="mech">
+          <div><span class="lbl" style="color:var(--amber)">Coordination Token %</span>SRE reads it as cost. Engineer reads it as context bloat / prompt quality.</div>
+          <div><span class="lbl" style="color:var(--blue)">Latency</span>Ops reads it as an SLA. PM reads it as user-perceived responsiveness.</div>
+        </div>
+        <div class="lesson"><b>A persona view = metric + interpretation + threshold</b>, not just a filtered column list. The metric is shared; the meaning and the alert threshold are not. Don't assume a shared definition just because you share a column header.</div>
+      </div>
+    </div>
+
+    <div class="caution c3">
+      <div class="cn">3</div>
+      <div>
+        <h3>Persona is a different axis from lifecycle stage</h3>
+        <div class="mech">
+          <div><span class="lbl" style="color:var(--purple)">WHO (persona)</span>PM / Domain &bull; App Engineer &bull; Platform &bull; SRE</div>
+          <div><span class="lbl" style="color:var(--blue)">WHEN (stage)</span>Design &bull; Code &bull; Deploy &bull; Operate</div>
+        </div>
+        <div class="lesson"><b>Keep two axes: who + when.</b> They correlate but aren't identical. Groundedness isn't &ldquo;design-only&rdquo; &mdash; it's a design-time gate AND a production canary (e.g. drift after a model swap). Collapsing the axes makes coverage look complete when it isn't.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>Generated for the Multiagent Shared Context Evaluation &mdash; metrics sourced from metrics_collector.py</footer>
+
+<script>
+// Metric model: each row is one of the four function questions.
+const ROWS = [
+  { n:1, title:"Input fidelity", sub:"Did it take upstream inputs accurately?",
+    metrics:[
+      {name:"Handoff Completeness", desc:"Did the handoff include all facts the agent needs?", lead:"eng", personas:["eng","pm"], stage:"Code"},
+      {name:"Context Freshness", desc:"Is the agent working with the latest information, not stale memory?", lead:"eng", personas:["eng"], stage:"Code / Operate"},
+    ]},
+  { n:2, title:"Core task quality", sub:"Did it perform its core function well? (the often-missing row)",
+    metrics:[
+      {name:"Analysis Groundedness", desc:"Are the claims supported by the source brief, not fabricated?", lead:"pm", personas:["pm"], stage:"Design / Operate", added:true},
+      {name:"Analysis Quality", desc:"Is the analysis insightful, numbers used correctly, no unsupported leaps?", lead:"pm", personas:["pm"], stage:"Design", added:true},
+    ]},
+  { n:3, title:"Output fidelity", sub:"Did it pass outputs downstream accurately?",
+    metrics:[
+      {name:"Memory Write Accuracy", desc:"Is what the agent wrote to memory correct given its input?", lead:"eng", personas:["eng","pm"], stage:"Code"},
+      {name:"State Consistency", desc:"Do agents agree on key facts (size, target, competitors)?", lead:"pm", personas:["pm","eng"], stage:"Design / Code"},
+    ]},
+  { n:4, title:"Resource efficiency", sub:"Did it use shared context and resources well?",
+    metrics:[
+      {name:"Context Utilization", desc:"Did the agent use the context it read from memory?", lead:"eng", personas:["eng","plat"], stage:"Code"},
+      {name:"Redundant Context", desc:"How much repeated / irrelevant context was transferred?", lead:"plat", personas:["plat"], stage:"Deploy"},
+      {name:"Context Compression (CCR)", desc:"Handoff length vs. original query length.", lead:"plat", personas:["plat"], stage:"Deploy"},
+      {name:"C2 Alignment", desc:"Cosine similarity of peer outputs (embeddings).", lead:"plat", personas:["plat","pm"], stage:"Deploy"},
+      {name:"Read / Write Latency", desc:"Time spent on memory operations.", lead:"sre", personas:["sre"], stage:"Operate"},
+      {name:"Coordination Latency %", desc:"Fraction of time on coordination vs. reasoning.", lead:"sre", personas:["sre","plat"], stage:"Operate"},
+      {name:"Coordination Token %", desc:"Fraction of tokens on context vs. generation (cost).", lead:"sre", personas:["sre","eng"], stage:"Operate"},
+    ]},
+];
+const BADGE = {pm:"PM/Domain", eng:"App Eng", plat:"Platform", sre:"SRE"};
+
+const rowsEl = document.getElementById("rows");
+ROWS.forEach(row => {
+  const head = document.createElement("div");
+  head.className = "qrow";
+  head.innerHTML = `<div class="qnum">${row.n}</div><h2>${row.title}</h2><span class="qsub">${row.sub}</span>`;
+  rowsEl.appendChild(head);
+  const grid = document.createElement("div");
+  grid.className = "cards";
+  row.metrics.forEach(m => {
+    const c = document.createElement("div");
+    c.className = "card";
+    c.dataset.lead = m.lead;
+    c.dataset.personas = m.personas.join(",");
+    const badges = m.personas.map(p => `<span class="badge b-${p}">${BADGE[p]}</span>`).join("");
+    c.innerHTML = `<h3>${m.name}${m.added?' &#10022;':''}</h3><p>${m.desc}</p>
+      <div class="badges">${badges}<span class="stage">${m.stage}</span></div>`;
+    grid.appendChild(c);
+  });
+  rowsEl.appendChild(grid);
+  if (row.n === 2) {
+    const g = document.createElement("div");
+    g.className = "gap-note";
+    g.innerHTML = `<b>&#10022; The gap we found.</b> These two metrics didn't exist. The suite was authored from a platform mindset, so the &ldquo;core task quality&rdquo; row was empty &mdash; no PM/domain persona was in the room. Passing coordination metrics &ne; good analysis.`;
+    rowsEl.appendChild(g);
+  }
+});
+
+// Persona filter
+const tabs = document.querySelectorAll(".ptab");
+tabs.forEach(t => t.addEventListener("click", () => {
+  tabs.forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  const p = t.dataset.p;
+  document.querySelectorAll(".card, .chart").forEach(c => {
+    if (p === "all") { c.classList.remove("dim"); return; }
+    const has = (c.dataset.personas || "").split(",").includes(p);
+    c.classList.toggle("dim", !has);
+  });
+}));
+</script>
+</body>
+</html>
