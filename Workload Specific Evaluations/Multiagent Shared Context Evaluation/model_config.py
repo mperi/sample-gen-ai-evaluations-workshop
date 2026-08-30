@@ -8,13 +8,15 @@ Edit this file to change models or prompts across all notebooks.
 # ---------------------------------------------------------------------------
 
 # Agent model — used by all spoke/peer agents and the hub coordinator
-AGENT_MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+# NOTE: sonnet-4 (20250514) is now marked LEGACY in Bedrock and is blocked for
+# accounts that haven't used it recently. Using the active sonnet-4-5 instead.
+AGENT_MODEL_ID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 # Judge model — used by LLM-as-judge for semantic evaluation
 # Claude Sonnet provides a good balance of speed and quality for workshop use.
 # For higher accuracy (at the cost of longer evaluation times), switch to Opus:
-#   JUDGE_MODEL_ID = "us.anthropic.claude-opus-4-20250514-v1:0"
-JUDGE_MODEL_ID = "us.anthropic.claude-sonnet-4-20250514-v1:0"
+#   JUDGE_MODEL_ID = "us.anthropic.claude-opus-4-5-20251101-v1:0"
+JUDGE_MODEL_ID = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 # Embedding model — used for C2 alignment in peer-to-peer notebook
 EMBEDDING_MODEL_ID = "amazon.titan-embed-text-v2:0"
