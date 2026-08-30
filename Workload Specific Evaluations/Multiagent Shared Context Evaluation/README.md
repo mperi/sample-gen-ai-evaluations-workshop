@@ -231,6 +231,8 @@ metrics/
 ├── datasets/research_briefs.jsonl          ← Input-grounded research briefs (Option A)
 ├── behavior_eval.py                        ← Expected-behavior suite runner + report
 ├── run_behavior_live.py                    ← CLI harness for the behavior suite (no notebook)
+├── judge_benchmark.py                      ← Scores the judge against human-labeled cases
+├── datasets/judge_benchmark.jsonl          ← Labeled cases validating the judge
 ├── 01-hub-spoke-local-memory.ipynb         ← Hub-and-spoke, Python list memory
 ├── 02-hub-spoke-agentcore-memory.ipynb     ← Hub-and-spoke, AgentCore Memory
 ├── 03-peer-to-peer-dynamic-swarm.ipynb     ← Peer-to-peer, dynamic handoffs via tools
@@ -292,3 +294,26 @@ Notes:
 
 Add a row and it is picked up automatically by both the notebook and the CLI
 harness. Load and inspect the dataset with `python dataset.py`.
+
+## Validating the Judge (Judge Benchmark)
+
+The behavior suite trusts an LLM judge to decide pass/fail. The **judge
+benchmark** validates that judge against human-labeled cases, so you know the
+scores mean something.
+
+`datasets/judge_benchmark.jsonl` holds labeled cases — for each expected
+behavior, a *should-pass* output and a *should-fail* output — with a human
+`pass`/`fail` verdict and rationale. The scorer runs the judge over each case
+and reports how often it agrees with the humans:
+
+```bash
+python judge_benchmark.py
+```
+
+The report shows overall agreement, a confusion matrix (human vs judge), and a
+list of disagreements. The metric to watch is **false positives** — cases a
+human failed but the judge passed — because those are silent quality misses.
+
+> The seed labels shipped here are **synthetic** (author-written good/bad
+> outputs) and should be reviewed/replaced with human-labeled real pipeline
+> outputs before the agreement numbers are trusted.

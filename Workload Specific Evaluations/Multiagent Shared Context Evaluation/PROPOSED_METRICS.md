@@ -143,6 +143,9 @@ strategy_synth) now has an input-grounded dataset:
 - [ ] **Provenance & grow-with-feedback** — add `source` (synthetic / production /
       human) and `date_added` fields plus a convention for appending real
       production failures over time; keep the dataset versioned/auditable.
-- [ ] **Failure-mode labels + judge benchmark** — per-case failure_mode labels and
-      human pass/fail (mirroring Foundational Evaluations' `judge_benchmark.jsonl`)
-      so the judge itself can be evaluated.
+- [~] **Judge benchmark** — scaffolded: `datasets/judge_benchmark.jsonl` (12
+      labeled pass/fail cases across the 6 behaviors) + `judge_benchmark.py`
+      (agreement %, confusion matrix, false-positive focus). Scorer validated
+      with stub judges. **Pending:** the seed labels are synthetic; replace with
+      human-labeled real pipeline outputs, then run `judge_benchmark.py` live to
+      get a trustworthy agreement number.
