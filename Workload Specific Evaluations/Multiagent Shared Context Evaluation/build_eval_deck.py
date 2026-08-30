@@ -297,6 +297,62 @@ _text(trap.text_frame, [
 trap.text_frame.margin_left = Inches(0.24)
 
 # ---------------------------------------------------------------------------
+# Slide (new) — Validating the judge: human-in-the-loop
+# ---------------------------------------------------------------------------
+s = add_slide(prs)
+bg(s)
+header(s, "TRUST THE JUDGE", "Who validates the validator? A human-in-the-loop benchmark")
+tb = s.shapes.add_textbox(Inches(0.6), Inches(1.42), Inches(12.1), Inches(0.6))
+_text(tb, [("An LLM grades the pipeline. But nothing grades the LLM \u2014 until a human "
+            "labels ground truth and we measure how often the judge agrees.", 14, GREY, False)])
+
+# 5-step workflow strip
+steps = [
+    ("1  RUN", BLUE, "Run every brief through the pipeline (live)."),
+    ("2  CAPTURE", TEAL, "Dump each output to a review file with its expected behavior."),
+    ("3  LABEL", PURPLE, "Human reads output + rule, marks PASS / FAIL + one-line reason."),
+    ("4  SCORE", AMBER, "Run the judge on the same cases; compare to the human labels."),
+    ("5  FOLD BACK", NAVY, "Labels become the benchmark; re-run as the judge/prompts change."),
+]
+w = Inches(2.28); h = Inches(1.9); gap = Inches(0.16); x0 = Inches(0.55); y = Inches(2.35)
+for i, (label, col, body) in enumerate(steps):
+    x = x0 + i * (w + gap)
+    card(s, x, y, w, h, fill=WHITE, line=col, weight=2.0)
+    top = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, x, y, w, Inches(0.46))
+    _solid(top, col)
+    _text(top, [(label, 12.5, WHITE, True)], align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, space_after=0)
+    tbc = s.shapes.add_textbox(x + Inches(0.18), y + Inches(0.56), w - Inches(0.36), h - Inches(0.66))
+    _text(tbc, [(body, 12, INK, False)], space_after=0)
+    if i < len(steps) - 1:
+        ar = s.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, x + w + Emu(500), y + Inches(0.7),
+                                gap - Emu(1000), Inches(0.4))
+        _solid(ar, AMBER)
+
+# The metric that matters + ground-truth note (two side-by-side cards)
+lc = card(s, Inches(0.55), Inches(4.65), Inches(6.0), Inches(2.05), fill=RGBColor(0xFD, 0xF3, 0xE2),
+          line=RED, weight=2.0)
+_text(lc.text_frame, [
+    [("Watch the false positives", 15, RED, True)],
+    [("The dangerous error is the judge passing an output a human failed \u2014 a "
+      "silent quality miss. Track those, not just overall accuracy.", 13.5, INK, False)],
+    [("", 5, GREY, False)],
+    [("Confusion matrix, human vs judge:", 12.5, NAVY, True),
+     ("  pass/pass, fail/fail = agree;  fail\u2192pass = false positive.", 12.5, INK, False)],
+], space_after=6)
+lc.text_frame.margin_left = Inches(0.3); lc.text_frame.margin_top = Inches(0.2)
+
+rc = card(s, Inches(6.75), Inches(4.65), Inches(6.0), Inches(2.05), fill=LIGHT, line=PURPLE, weight=1.5)
+_text(rc.text_frame, [
+    [("The human is the ground truth", 15, PURPLE, True)],
+    [("You grade against the case\u2019s expected behavior \u2014 not \u201cis this good "
+      "analysis?\u201d Cite specific evidence; when unsure, default to FAIL.", 13.5, INK, False)],
+    [("", 5, GREY, False)],
+    [("Seed labels are synthetic", 12.5, NAVY, True),
+     (" until replaced with human-labeled real outputs.", 12.5, INK, False)],
+], space_after=6)
+rc.text_frame.margin_left = Inches(0.3); rc.text_frame.margin_top = Inches(0.2)
+
+# ---------------------------------------------------------------------------
 # Slide 4 — Caution 1: seams
 # ---------------------------------------------------------------------------
 caution_slide(
