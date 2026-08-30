@@ -88,3 +88,27 @@ never against source data or an analytical rubric.
   captured in history.
 - Open the PR with: the gap being closed (no trend-accuracy metric), the new
   metrics and their rationale (this doc), and validation notes from the re-run.
+
+## Implementation Status
+
+- [x] **Analysis Groundedness** — `LLMJudge.judge_analysis_groundedness()` added.
+- [x] **Analysis Quality Rubric** — `LLMJudge.judge_analysis_quality()` added.
+- [x] `source_facts` threaded through `AgentRecord`, `TurnRecord`, `begin_turn()`,
+      and a new `record_source_facts()` for per-agent overrides.
+- [x] Both judges wired into `evaluate_all()` with existing pacing.
+- [x] New "Analysis Quality Metrics" table in `context_metrics_report()` plus
+      reasoning details (unsupported claims, weaknesses); both dimensions added
+      to `comparison_report()` averages.
+- [x] Validated via a no-network smoke test (reports render, existing metrics
+      intact).
+- [ ] **Notebook wiring (follow-up):** pass `source_facts` into `begin_turn()`
+      in the peer-to-peer notebooks so groundedness has a reference; without it,
+      groundedness returns a neutral 5/5 ("not evaluated"). Trend Consistency
+      Over Turns (metric #3) remains a future follow-up.
+
+### Notes
+- Groundedness degrades gracefully: with no `source_facts`, it returns
+  `score 5, "not evaluated"` rather than failing, so existing notebook runs keep
+  working until the reference is wired in.
+- Analysis Quality is fact-agnostic by design (assumes facts correct, judges the
+  reasoning), so it runs without any reference data.
