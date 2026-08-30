@@ -143,9 +143,24 @@ strategy_synth) now has an input-grounded dataset:
 - [ ] **Provenance & grow-with-feedback** — add `source` (synthetic / production /
       human) and `date_added` fields plus a convention for appending real
       production failures over time; keep the dataset versioned/auditable.
-- [~] **Judge benchmark** — scaffolded: `datasets/judge_benchmark.jsonl` (12
-      labeled pass/fail cases across the 6 behaviors) + `judge_benchmark.py`
-      (agreement %, confusion matrix, false-positive focus). Scorer validated
-      with stub judges. **Pending:** the seed labels are synthetic; replace with
-      human-labeled real pipeline outputs, then run `judge_benchmark.py` live to
-      get a trustworthy agreement number.
+- [x] **Judge benchmark** — `datasets/judge_benchmark.jsonl` (12 synthetic seed
+      cases) + `datasets/judge_benchmark_live.jsonl` (10 human-labeled real
+      pipeline outputs) + `judge_benchmark.py` (agreement %, confusion matrix,
+      false-positive focus). `capture_for_review.py` produces the review file
+      (`review/`) that a human labels.
+
+### Judge benchmark result (first human-labeled live run)
+
+- **Agreement: 8/10 (80%). 2 false positives, 0 false negatives.**
+- Both disagreements were `normal_grounded_analysis` cases (brief-01, brief-05)
+  the human FAILed but the judge PASSed. The judge's reasoning was correct for
+  its instructions ("faithful to the brief") — the human applied a stricter bar:
+    - brief-01: real-world accuracy (actual fast-casual CAGR ~6.8%, not the
+      stated 8%) — a **groundedness-to-reality** bar, not brief-faithfulness.
+    - brief-05: analytical depth (pay-per-hour figures not broken down per
+      metro) — an **analysis-quality** bar.
+- **Conclusion:** this is not a judge bug; it shows `normal_grounded_analysis`
+  is too weak. Those cases should be scored by the **Analysis Groundedness** and
+  **Analysis Quality** judges (already built), not the conformance judge. Follow-up:
+  route normal cases through groundedness/quality, or split the behavior into
+  faithful-to-brief vs faithful-to-reality vs quality.
