@@ -227,14 +227,104 @@ metrics/
 ├── model_config.py                         ← Centralised model IDs and prompts
 ├── metrics_collector.py                    ← LLM judge + latency tracking + reports
 ├── eval_helpers.py                         ← Shared functions (format_memory, embeddings, etc.)
+├── dataset.py                              ← Evaluation dataset loader + schema
+├── datasets/research_briefs.jsonl          ← Input-grounded research briefs (Option A)
+├── behavior_eval.py                        ← Expected-behavior suite runner + report
+├── run_behavior_live.py                    ← CLI harness for the behavior suite (no notebook)
+├── judge_benchmark.py                      ← Scores the judge against human-labeled cases
+├── datasets/judge_benchmark.jsonl          ← Labeled cases validating the judge
 ├── 01-hub-spoke-local-memory.ipynb         ← Hub-and-spoke, Python list memory
 ├── 02-hub-spoke-agentcore-memory.ipynb     ← Hub-and-spoke, AgentCore Memory
 ├── 03-peer-to-peer-dynamic-swarm.ipynb     ← Peer-to-peer, dynamic handoffs via tools
-└── 04-peer-to-peer-sequential.ipynb        ← Peer-to-peer, fixed sequential order
+├── 04-peer-to-peer-sequential.ipynb        ← Peer-to-peer, fixed sequential order
+└── presentation/                           ← Explainer assets (deck, webpage, charts)
+    ├── Evaluating-Agent-Functions.pptx     ←   Persona-lens deck (build_eval_deck.py)
+    ├── persona-metrics.html                ←   Interactive persona metrics view
+    ├── charts/                             ←   Chart PNGs (build_charts.py)
+    ├── build_eval_deck.py
+    └── build_charts.py
 ```
+
+> The `presentation/` assets are explainer material, separate from the evaluation
+> code. The charts use representative (illustrative) data, not a live run.
+> Regenerate with `python presentation/build_charts.py` and
+> `python presentation/build_eval_deck.py`.
 
 ## Prerequisites
 
 - Python 3.10+
 - AWS credentials with access to Bedrock models (required for all notebooks) and AgentCore Memory (required for Notebook 2 only)
 - Dependencies: `pip install -r requirements.txt`
+
+## Running the Behavior Evaluation from the CLI
+
+Notebook 4 includes a "Step 8" cell that runs the full **expected-behavior
+conformance suite** — every research brief in `datasets/research_briefs.jsonl`
+is run through the sequential pipeline (Market Trends → Customer Insights →
+Strategy Synthesizer) and graded against its declared `expected_behavior`
+(e.g. `flag_invalid_premise`, `resist_prompt_injection`, `require_source_citation`).
+
+If you'd rather run this without opening Jupyter, use the CLI harness:
+
+```bash
+# from this directory, with AWS credentials configured
+python run_behavior_live.py
+```
+
+What it does:
+
+- Loads all briefs via `dataset.py` and runs each through the same pipeline the
+  notebook uses (`run_behavior_live.py` mirrors the notebook's `run_session` logic).
+- Grades each output with `LLMJudge.judge_expected_behavior` and prints a
+  markdown conformance report: overall pass rate, a per-behavior breakdown, and
+  a per-case PASS/FAIL table with the judge's reasoning.
+
+Notes:
+
+- This makes **real Bedrock calls** (each brief runs 3 agents plus a judge), so
+  expect a few minutes of runtime and a modest token spend.
+- The region comes from `AWS_REGION` (default `us-west-2`); model IDs come from
+  `model_config.py`.
+- The dataset is **input-grounded (Option A)**: briefs carry the verifiable facts
+  they state, used as the groundedness reference. There are no per-stage gold
+  answers yet.
+
+## Extending the Dataset
+
+`datasets/research_briefs.jsonl` is the evaluation dataset. Each row is one case:
+
+| Field | Meaning |
+|-------|---------|
+| `id` | Unique case id |
+| `scenario` / `industry` | Human-readable description |
+| `turns` | One or more user messages (the research brief) |
+| `facts` | Structured ground truth used as the groundedness reference |
+| `premise_valid` | `false` for deliberately flawed premises |
+| `expected_behavior` | Machine-checkable expectation (see `dataset.py` `EXPECTED_BEHAVIORS`) |
+| `notes` | Rationale / what the case tests |
+
+Add a row and it is picked up automatically by both the notebook and the CLI
+harness. Load and inspect the dataset with `python dataset.py`.
+
+## Validating the Judge (Judge Benchmark)
+
+The behavior suite trusts an LLM judge to decide pass/fail. The **judge
+benchmark** validates that judge against human-labeled cases, so you know the
+scores mean something.
+
+`datasets/judge_benchmark.jsonl` holds labeled cases — for each expected
+behavior, a *should-pass* output and a *should-fail* output — with a human
+`pass`/`fail` verdict and rationale. The scorer runs the judge over each case
+and reports how often it agrees with the humans:
+
+```bash
+python judge_benchmark.py
+```
+
+The report shows overall agreement, a confusion matrix (human vs judge), and a
+list of disagreements. The metric to watch is **false positives** — cases a
+human failed but the judge passed — because those are silent quality misses.
+
+> The seed labels shipped here are **synthetic** (author-written good/bad
+> outputs) and should be reviewed/replaced with human-labeled real pipeline
+> outputs before the agreement numbers are trusted.
