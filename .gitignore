@@ -28,3 +28,12 @@
 
 **/cities_evaluation_results.json
 **/cities_evaluation_summary.csv
+
+# Local, personal work logs (never commit)
+**/*.local.md
+
+# Local human-review scratch (labeling artifacts, keep local only)
+**/Multiagent Shared Context Evaluation/review/
+
+# Office temp/lock files
+**/~$*
