@@ -236,8 +236,19 @@ metrics/
 ├── 01-hub-spoke-local-memory.ipynb         ← Hub-and-spoke, Python list memory
 ├── 02-hub-spoke-agentcore-memory.ipynb     ← Hub-and-spoke, AgentCore Memory
 ├── 03-peer-to-peer-dynamic-swarm.ipynb     ← Peer-to-peer, dynamic handoffs via tools
-└── 04-peer-to-peer-sequential.ipynb        ← Peer-to-peer, fixed sequential order
+├── 04-peer-to-peer-sequential.ipynb        ← Peer-to-peer, fixed sequential order
+└── presentation/                           ← Explainer assets (deck, webpage, charts)
+    ├── Evaluating-Agent-Functions.pptx     ←   Persona-lens deck (build_eval_deck.py)
+    ├── persona-metrics.html                ←   Interactive persona metrics view
+    ├── charts/                             ←   Chart PNGs (build_charts.py)
+    ├── build_eval_deck.py
+    └── build_charts.py
 ```
+
+> The `presentation/` assets are explainer material, separate from the evaluation
+> code. The charts use representative (illustrative) data, not a live run.
+> Regenerate with `python presentation/build_charts.py` and
+> `python presentation/build_eval_deck.py`.
 
 ## Prerequisites
 

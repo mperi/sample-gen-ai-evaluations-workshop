@@ -10,6 +10,7 @@ Run:  python build_charts.py
 Output: charts/*.png
 """
 import os
+import sys
 import math
 import random
 from dataclasses import dataclass, field
@@ -19,12 +20,16 @@ import matplotlib
 matplotlib.use("Agg")  # headless
 import matplotlib.pyplot as plt
 
+# eval_helpers lives in the parent module dir; add it to the path so this
+# script runs from the presentation/ subfolder.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from eval_helpers import (
     plot_context_metrics_radar, plot_latency_breakdown,
     plot_session_comparison, plot_coordination_overhead, plot_c2_heatmap,
 )
 
-OUT = "charts"
+OUT = os.path.join(os.path.dirname(__file__), "charts")
 os.makedirs(OUT, exist_ok=True)
 
 

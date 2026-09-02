@@ -5,6 +5,8 @@ Run:  python build_eval_deck.py
 Output: Evaluating-Agent-Functions.pptx (same directory)
 """
 
+import os
+
 from pptx import Presentation
 from pptx.util import Inches, Pt, Emu
 from pptx.dml.color import RGBColor
@@ -451,6 +453,6 @@ for i, (h, b) in enumerate(points):
         [(b, 14, RGBColor(0xC9, 0xD6, 0xEA), False)],
     ], space_after=3)
 
-out = "Evaluating-Agent-Functions.pptx"
+out = os.path.join(os.path.dirname(__file__), "Evaluating-Agent-Functions.pptx")
 prs.save(out)
 print(f"Saved {out} with {len(prs.slides._sldIdLst)} slides")
